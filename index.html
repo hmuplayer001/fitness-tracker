@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Fit & Strong — Fitness Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #4ade80;
+    --orange: #fb923c;
+    --purple: #a78bfa;
+    --blue: #60a5fa;
+    --red: #f87171;
+    --bg: #07090f;
+    --bg2: #0d1117;
+    --bg3: #161b25;
+    --border: rgba(255,255,255,0.06);
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --dim: #1e2535;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; padding-bottom: 80px; }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(180deg, #0d1320 0%, transparent 100%);
+    padding: 20px 18px 0;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .header h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 900; background: linear-gradient(90deg, var(--green), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header-sub { font-size: 10px; color: var(--green); letter-spacing: 3px; font-weight: 700; text-transform: uppercase; margin-bottom: 3px; }
+  .sync-btn { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.2); color: var(--green); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .sync-btn:active { opacity: 0.7; }
+  .progress-bar { height: 3px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin-bottom: 0; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--purple)); border-radius: 3px; transition: width 0.8s ease; }
+
+  /* TABS */
+  .tabs { display: flex; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--border); }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex-shrink: 0; padding: 12px 14px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 700; font-family: 'DM Sans', sans-serif; transition: all 0.2s; white-space: nowrap; }
+  .tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+  /* CONTENT */
+  .content { padding: 16px; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* CARDS */
+  .card { background: var(--bg3); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .card-accent { border-color: rgba(74,222,128,0.2); background: rgba(74,222,128,0.04); }
+  .card-orange { border-color: rgba(251,146,60,0.2); background: rgba(251,146,60,0.04); }
+  .card-red { border-color: rgba(248,113,113,0.2); background: rgba(248,113,113,0.04); }
+  .card-blue { border-color: rgba(96,165,250,0.2); background: rgba(96,165,250,0.04); }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+  .stat-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 900; }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* BUTTONS */
+  .btn { border: none; border-radius: 50px; padding: 12px 28px; font-size: 14px; font-weight: 700; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s; }
+  .btn-green { background: linear-gradient(135deg, #4ade80, #22c55e); color: #050d05; }
+  .btn-red { background: linear-gradient(135deg, #f87171, #ef4444); color: #fff; }
+  .btn-sm { padding: 8px 18px; font-size: 13px; border-radius: 10px; }
+  .btn:active { transform: scale(0.97); }
+
+  /* INPUT */
+  input[type=number], input[type=text] {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 12px 16px; color: var(--text); font-size: 16px;
+    font-family: 'DM Sans', sans-serif; outline: none; width: 100%;
+    -webkit-appearance: none;
+  }
+  input:focus { border-color: var(--green); }
+
+  /* FASTING CIRCLE */
+  .fasting-wrap { text-align: center; padding: 8px 0; }
+  .timer-display { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 900; letter-spacing: 2px; margin: 12px 0; transition: color 0.3s; }
+  .circle-wrap { position: relative; width: 130px; height: 130px; margin: 0 auto 20px; }
+  .circle-wrap svg { transform: rotate(-90deg); }
+  .circle-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 8; }
+  .circle-prog { fill: none; stroke: var(--green); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+  .circle-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .circle-pct { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 900; color: var(--green); }
+  .circle-goal { font-size: 11px; color: var(--muted); }
+
+  /* PHASE PILLS */
+  .phase-pills { display: flex; gap: 8px; margin-bottom: 14px; }
+  .phase-pill { flex: 1; padding: 10px 6px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; font-weight: 700; font-family: 'DM Sans', sans-serif; text-align: center; transition: all 0.2s; }
+  .phase-pill.active-green { border-color: var(--green); background: rgba(74,222,128,0.1); color: var(--green); }
+  .phase-pill.active-orange { border-color: var(--orange); background: rgba(251,146,60,0.1); color: var(--orange); }
+  .phase-pill.active-purple { border-color: var(--purple); background: rgba(167,139,250,0.1); color: var(--purple); }
+
+  /* WORKOUT */
+  .day-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 8px; overflow: hidden; }
+  .day-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; }
+  .day-body { padding: 0 16px 14px; }
+  .exercise-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 6px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 10px; cursor: pointer; transition: all 0.15s; }
+  .exercise-item.done { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.2); }
+  .check-circle { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #334155; background: transparent; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; font-size: 11px; }
+  .check-circle.checked { background: var(--green); border-color: var(--green); color: #050d05; font-weight: 900; }
+
+  /* LOG TABLE */
+  .log-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 6px; }
+  .log-date { font-size: 13px; font-weight: 600; }
+  .log-diff { font-size: 11px; }
+  .log-weight { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 900; color: var(--green); }
+
+  /* CHART */
+  .chart-wrap { height: 90px; display: flex; align-items: flex-end; gap: 5px; padding-top: 24px; position: relative; }
+  .chart-bar { flex: 1; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, var(--green), rgba(74,222,128,0.3)); position: relative; transition: height 0.6s ease; min-height: 4px; }
+  .chart-label { font-size: 8px; color: var(--muted); text-align: center; margin-top: 4px; }
+  .chart-val { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 9px; color: var(--green); font-weight: 700; white-space: nowrap; }
+
+  /* MILESTONE */
+  .milestone { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 6px; }
+  .milestone.reached { border-color: rgba(74,222,128,0.3); background: rgba(74,222,128,0.06); }
+  .ms-dot { width: 32px; height: 32px; border-radius: 50%; background: var(--dim); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .milestone.reached .ms-dot { background: var(--green); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1a2235; border: 1px solid var(--green); color: var(--green); padding: 10px 20px; border-radius: 50px; font-size: 13px; font-weight: 700; opacity: 0; transition: all 0.3s; z-index: 999; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* TICKER */
+  .ticker { background: rgba(74,222,128,0.04); border-bottom: 1px solid rgba(74,222,128,0.08); padding: 9px 18px; font-size: 12px; color: #86efac; display: flex; gap: 8px; align-items: flex-start; }
+
+  /* SECTION LABELS */
+  .section-label { font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; padding: 0 2px; }
+
+  /* SYNC STATUS */
+  .sync-status { font-size: 11px; color: var(--muted); text-align: center; padding: 6px; }
+  .sync-status.ok { color: var(--green); }
+  .sync-status.err { color: var(--red); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 4px; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .pulsing { animation: pulse 1.5s infinite; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-sub">Hành trình biến đổi</div>
+      <h1>Fit & Strong</h1>
+    </div>
+    <button class="sync-btn" onclick="syncAll()">☁ Sync</button>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="mainProgress" style="width:0%"></div></div>
+</div>
+
+<div class="ticker" id="ticker">💡 Kiên trì là chìa khóa. Không cần hoàn hảo, chỉ cần tiếp tục.</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('overview')">📊 Tổng Quan</button>
+  <button class="tab" onclick="switchTab('fasting')">⏱ Nhịn Ăn</button>
+  <button class="tab" onclick="switchTab('workout')">💪 Tập Luyện</button>
+  <button class="tab" onclick="switchTab('log')">📝 Nhật Ký</button>
+</div>
+
+<div class="content">
+
+  <!-- OVERVIEW -->
+  <div class="section active" id="sec-overview">
+    <div class="grid-2" style="margin-bottom:12px">
+      <div class="stat-card">
+        <div class="stat-label">Cân nặng hiện tại</div>
+        <div class="stat-value" style="color:var(--orange)" id="curWeight">68.0</div>
+        <div class="stat-sub">kg · Bắt đầu: 68 kg</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Còn phải giảm</div>
+        <div class="stat-value" style="color:var(--green)" id="toGo">10.0</div>
+        <div class="stat-sub">kg · Mục tiêu: 58 kg</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">BMI hiện tại</div>
+        <div class="stat-value" style="color:var(--orange)" id="curBMI">25.6</div>
+        <div class="stat-sub">Thừa cân nhẹ</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Đã giảm được</div>
+        <div class="stat-value" style="color:var(--green)" id="lostKg">0.0</div>
+        <div class="stat-sub">kg · <span id="lostPct">0</span>% mục tiêu</div>
+      </div>
+    </div>
+
+    <!-- Phases -->
+    <div class="section-label">Giai đoạn tập luyện</div>
+    <div class="phase-pills">
+      <button class="phase-pill active-green" onclick="setPhase(0,this)">🌱 Thích Nghi<br><span style="font-size:9px;font-weight:400">T1–3</span></button>
+      <button class="phase-pill" onclick="setPhase(1,this)">🔥 Đốt Mỡ<br><span style="font-size:9px;font-weight:400">T4–8</span></button>
+      <button class="phase-pill" onclick="setPhase(2,this)">💎 Định Hình<br><span style="font-size:9px;font-weight:400">T9–16</span></button>
+    </div>
+
+    <div class="card" id="phaseCard">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:22px" id="phaseIcon">🌱</span>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:var(--green)" id="phaseName">Giai đoạn 1: Thích Nghi</div>
+          <div style="font-size:11px;color:var(--muted)" id="phaseWeeks">Tuần 1–3 · Làm quen cơ thể</div>
+        </div>
+      </div>
+      <div class="grid-2" style="gap:8px">
+        <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:10px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">Cửa sổ IF</div>
+          <div style="font-weight:700;color:var(--green);font-size:13px" id="phaseIF">16:8</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:10px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">Calo/ngày</div>
+          <div style="font-weight:700;color:var(--green);font-size:13px" id="phaseCal">1.600–1.750</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:10px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">Ăn</div>
+          <div style="font-weight:700;color:var(--green);font-size:12px" id="phaseEat">12:00–20:00</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:10px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">Nhịn</div>
+          <div style="font-weight:700;color:var(--green);font-size:12px" id="phaseFast">20:00–12:00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mini chart -->
+    <div class="section-label" style="margin-top:4px">Biểu đồ cân nặng</div>
+    <div class="card" style="padding:14px 14px 8px">
+      <div class="chart-wrap" id="chartWrap">
+        <div style="color:var(--muted);font-size:12px;margin:auto">Chưa có dữ liệu — ghi cân trong tab Nhật Ký</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FASTING -->
+  <div class="section" id="sec-fasting">
+    <div class="card" id="fastCard">
+      <div class="fasting-wrap">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:4px" id="fastStatus">⚪ Chưa bắt đầu nhịn</div>
+        <div class="timer-display" id="timerDisplay" style="color:#334155">00:00:00</div>
+        <div class="circle-wrap">
+          <svg width="130" height="130" viewBox="0 0 130 130">
+            <circle class="circle-bg" cx="65" cy="65" r="56"/>
+            <circle class="circle-prog" id="circleProgress" cx="65" cy="65" r="56"
+              stroke-dasharray="351.86"
+              stroke-dashoffset="351.86"/>
+          </svg>
+          <div class="circle-center">
+            <div class="circle-pct" id="fastPct">0%</div>
+            <div class="circle-goal" id="fastGoalLabel">/16h</div>
+          </div>
+        </div>
+        <button class="btn btn-green" id="fastBtn" onclick="toggleFasting()">▶ Bắt đầu nhịn</button>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:4px">Lịch cửa sổ IF theo giai đoạn</div>
+    <div class="card">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(74,222,128,0.06);border-radius:10px;border:1px solid rgba(74,222,128,0.15)">
+          <div><div style="font-weight:700;color:var(--green);font-size:13px">16:8 · Thích Nghi (T1–3)</div><div style="font-size:11px;color:var(--muted)">🍴 12:00–20:00 &nbsp;⏸ 20:00–12:00</div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(251,146,60,0.06);border-radius:10px;border:1px solid rgba(251,146,60,0.15)">
+          <div><div style="font-weight:700;color:var(--orange);font-size:13px">18:6 · Đốt Mỡ (T4–8)</div><div style="font-size:11px;color:var(--muted)">🍴 13:00–19:00 &nbsp;⏸ 19:00–13:00</div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(167,139,250,0.06);border-radius:10px;border:1px solid rgba(167,139,250,0.15)">
+          <div><div style="font-weight:700;color:var(--purple);font-size:13px">16:8 · Định Hình (T9–16)</div><div style="font-size:11px;color:var(--muted)">🍴 12:00–20:00 &nbsp;⏸ Linh hoạt</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-blue">
+      <div style="font-weight:700;color:var(--blue);margin-bottom:8px;font-size:13px">💧 Được uống trong giờ nhịn</div>
+      <div style="font-size:12px;color:#94a3b8;line-height:2">✓ Nước lọc (càng nhiều càng tốt)<br>✓ Trà đen / trà xanh (không đường)<br>✓ Cà phê đen (không đường, không sữa)<br>✓ Điện giải 0 calo (tùy chọn)</div>
+    </div>
+
+    <div id="fastSyncStatus" class="sync-status"></div>
+  </div>
+
+  <!-- WORKOUT -->
+  <div class="section" id="sec-workout">
+    <div class="phase-pills" id="workoutPhasePills">
+      <button class="phase-pill active-green" onclick="setWorkoutPhase(0,this)">🌱 T1–3</button>
+      <button class="phase-pill" onclick="setWorkoutPhase(1,this)">🔥 T4–8</button>
+      <button class="phase-pill" onclick="setWorkoutPhase(2,this)">💎 T9–16</button>
+    </div>
+    <div id="workoutList"></div>
+  </div>
+
+  <!-- LOG -->
+  <div class="section" id="sec-log">
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">⚖️ Ghi cân nặng hôm nay</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input type="number" id="weightInput" placeholder="VD: 67.4" step="0.1" min="40" max="150">
+        <button class="btn btn-green btn-sm" onclick="saveWeight()" style="white-space:nowrap;flex-shrink:0">Lưu</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted)">💡 Cân mỗi sáng, sau khi đi vệ sinh, trước khi ăn</div>
+      <div id="weightSyncStatus" class="sync-status" style="margin-top:6px"></div>
+    </div>
+
+    <!-- History -->
+    <div class="section-label">Lịch sử cân nặng</div>
+    <div id="weightHistory"><div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Chưa có dữ liệu</div></div>
+
+    <!-- Milestones -->
+    <div class="section-label" style="margin-top:8px">🏆 Các mốc cần đạt</div>
+    <div id="milestones"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbtIadxRBaROovx5Fi01KluRW9NL6KSbJPVF8ixmhowy1ddUtnbOJ71xPrd-LHfuSFU5A/exec";
+const START_WEIGHT = 68;
+const TARGET_WEIGHT = 58;
+const HEIGHT = 1.63;
+
+// ── STATE ──────────────────────────────────────────────
+let weightLogs = [];       // [{date, weight}]
+let fastingStart = null;   // timestamp ms
+let fastingActive = false;
+let timerInterval = null;
+let currentPhase = 0;
+let currentWorkoutPhase = 0;
+let workoutChecked = {};   // {key: true}
+let tickerIdx = 0;
+
+const TIPS = [
+  "💡 Cân nặng dao động ±1–2kg mỗi ngày là bình thường — đánh giá theo trung bình 7 ngày.",
+  "💡 Ngủ đủ 7–8 tiếng: thiếu ngủ tăng cortisol → khó giảm cân hơn.",
+  "💡 Protein mục tiêu: 1.6–2.0g × kg cân nặng mỗi ngày.",
+  "💡 Nếu bỏ 1 buổi tập — không sao. Chỉ cần không bỏ 2 buổi liên tiếp.",
+  "💡 Cà phê đen trong giờ nhịn: ổn hoàn toàn, giúp giảm cảm giác đói.",
+  "💡 Thay vì nhìn cân số, hãy chú ý quần áo vừa hơn chưa — đó mới là thước đo thật.",
+];
+
+const PHASES = [
+  { icon:"🌱", name:"Giai đoạn 1: Thích Nghi", weeks:"Tuần 1–3 · Làm quen cơ thể", if:"16:8", cal:"1.600–1.750", eat:"12:00–20:00", fast:"20:00–12:00", color:"var(--green)", goalH:16,
+    days:[
+      {day:"Thứ 2",type:"Sức mạnh A",icon:"💪",ex:["Incline Push-up 3×10","Knee Push-up 3×12","Wall Squat 3×30s","Plank 3×20s","Glute Bridge 3×15"]},
+      {day:"Thứ 3",type:"Cardio nhẹ",icon:"🚶",ex:["Đi bộ nhanh 30 phút","Giãn cơ toàn thân 10 phút"]},
+      {day:"Thứ 4",type:"Sức mạnh B",icon:"🏋️",ex:["Incline Push-up 3×12","Assisted Squat 3×12","Superman 3×10","Dead Bug 3×8","Hip Thrust 3×12"]},
+      {day:"Thứ 5",type:"Nghỉ ngơi",icon:"😌",ex:["Giãn cơ nhẹ 15 phút","Thiền hoặc đi bộ chậm"]},
+      {day:"Thứ 6",type:"Sức mạnh C",icon:"⚡",ex:["Diamond Push-up 3×8","Jump Squat 3×8","Mountain Climber 3×20","Reverse Crunch 3×12","Bird Dog 3×10"]},
+      {day:"Thứ 7",type:"Cardio vừa",icon:"🏃",ex:["Chạy bộ nhẹ 30 phút","Zone 2: thở được vẫn nói chuyện"]},
+      {day:"CN",type:"Nghỉ hoàn toàn",icon:"🌿",ex:["Nghỉ hoàn toàn hoặc yoga nhẹ","Chuẩn bị tâm lý tuần mới"]},
+    ]
+  },
+  { icon:"🔥", name:"Giai đoạn 2: Đốt Mỡ", weeks:"Tuần 4–8 · Tăng cường độ", if:"18:6", cal:"1.450–1.600", eat:"13:00–19:00", fast:"19:00–13:00", color:"var(--orange)", goalH:18,
+    days:[
+      {day:"Thứ 2",type:"Push Day",icon:"💪",ex:["Standard Push-up 4×12","Pike Push-up 3×8","Dips (ghế) 3×10","Plank 3×40s","Tricep Extension 3×12"]},
+      {day:"Thứ 3",type:"Pull & Core",icon:"🏋️",ex:["Inverted Row 4×8","Chin-up Negative 3×5","Superman 3×12","Hollow Body 3×20s","Leg Raise 3×10"]},
+      {day:"Thứ 4",type:"Leg Day",icon:"🦵",ex:["Squat 4×15","Bulgarian Split Squat 3×10","Single Leg Glute Bridge 3×10","Calf Raise 4×20","Wall Sit 3×45s"]},
+      {day:"Thứ 5",type:"HIIT",icon:"🔥",ex:["Burpee 4×8","Jump Squat 4×10","Mountain Climber 4×20","High Knee 4×20","Rest 60s giữa vòng"]},
+      {day:"Thứ 6",type:"Upper Body",icon:"⚡",ex:["Archer Push-up 3×6/bên","Wide Push-up 3×12","Inverted Row 3×10","Plank to Push-up 3×8","L-sit (assisted) 3×10s"]},
+      {day:"Thứ 7",type:"Long Cardio",icon:"🏃",ex:["Chạy bộ 40–45 phút","Zone 2–3, nhịp tim 130–150"]},
+      {day:"CN",type:"Active Recovery",icon:"🌿",ex:["Yoga 20 phút","Foam roll + giãn cơ","Chuẩn bị meal prep"]},
+    ]
+  },
+  { icon:"💎", name:"Giai đoạn 3: Định Hình", weeks:"Tuần 9–16 · Cơ bắp + Duy trì", if:"16:8", cal:"1.600–1.800", eat:"12:00–20:00", fast:"Linh hoạt", color:"var(--purple)", goalH:16,
+    days:[
+      {day:"Thứ 2",type:"Push Advanced",icon:"💪",ex:["Pseudo Planche Push-up 4×8","Pike Push-up 4×10","Ring/Bar Dips 4×8","Handstand Practice 3×30s","Diamond Push-up 4×12"]},
+      {day:"Thứ 3",type:"Pull Advanced",icon:"🏋️",ex:["Pull-up 4×5–8","Australian Pull-up 4×10","Commando Row 3×8","Front Lever Tuck 3×10s","Bicep Row 4×10"]},
+      {day:"Thứ 4",type:"Leg Advanced",icon:"🦵",ex:["Pistol Squat Assisted 3×8","Jump Lunge 4×10","Nordic Curl (assisted) 3×5","Single Leg Glute Bridge 4×12","Box Jump 3×8"]},
+      {day:"Thứ 5",type:"Skills",icon:"🎯",ex:["Handstand kick-up 10 phút","L-sit progression 10 phút","Human flag tuck 10 phút","Planche lean 10 phút"]},
+      {day:"Thứ 6",type:"Full Body Circuit",icon:"⚡",ex:["5 vòng: Push-up×10 + Squat×15 + Row×10 + Plank 30s","Rest 90s mỗi vòng"]},
+      {day:"Thứ 7",type:"Long Run",icon:"🏃",ex:["Chạy 50–60 phút","Fasted cardio sáng sớm nếu muốn"]},
+      {day:"CN",type:"Rest + Plan",icon:"🌿",ex:["Nghỉ ngơi hoàn toàn","Cân + ghi log","Lên kế hoạch tuần mới"]},
+    ]
+  },
+];
+
+const MILESTONES = [
+  {w:66, label:"Mốc 1", desc:"Giảm 2kg — cơ thể đã thích nghi!"},
+  {w:64, label:"Mốc 2", desc:"Giảm 4kg — BMI chuyển về biên bình thường"},
+  {w:62, label:"Mốc 3", desc:"Giảm 6kg — thay đổi rõ rệt"},
+  {w:60, label:"Mốc 4", desc:"Giảm 8kg — gần đích rồi!"},
+  {w:58, label:"🎯 Đích", desc:"58 kg — BMI 21.8 — HOÀN THÀNH!"},
+];
+
+// ── INIT ───────────────────────────────────────────────
+window.onload = () => {
+  loadLocal();
+  renderAll();
+  startTickerRotation();
+  // Auto-sync on load
+  syncFromSheets();
+};
+
+function loadLocal() {
+  try {
+    const wl = localStorage.getItem('wl'); if(wl) weightLogs = JSON.parse(wl);
+    const fs = localStorage.getItem('fs'); if(fs) { fastingStart = parseInt(fs); fastingActive = true; }
+    const wc = localStorage.getItem('wc'); if(wc) workoutChecked = JSON.parse(wc);
+    const cp = localStorage.getItem('cp'); if(cp) currentPhase = parseInt(cp);
+    const cwp = localStorage.getItem('cwp'); if(cwp) currentWorkoutPhase = parseInt(cwp);
+  } catch(e) {}
+}
+
+function saveLocal() {
+  try {
+    localStorage.setItem('wl', JSON.stringify(weightLogs));
+    localStorage.setItem('wc', JSON.stringify(workoutChecked));
+    localStorage.setItem('cp', currentPhase);
+    localStorage.setItem('cwp', currentWorkoutPhase);
+    if(fastingActive && fastingStart) localStorage.setItem('fs', fastingStart);
+    else localStorage.removeItem('fs');
+  } catch(e) {}
+}
+
+// ── GOOGLE SHEETS API ──────────────────────────────────
+async function sheetRead(sheet) {
+  try {
+    const url = `${API}?action=read&sheet=${sheet}&cb=${Date.now()}`;
+    const r = await fetch(url, {mode: "cors", redirect: "follow"});
+    return await r.json();
+  } catch(e) {
+    // fallback: no-cors cannot read response, return null
+    return null;
+  }
+}
+
+async function sheetAppend(sheet, row) {
+  try {
+    const url = `${API}?action=append&sheet=${sheet}&row=${encodeURIComponent(JSON.stringify(row))}`;
+    // Use no-cors mode: fire-and-forget, cannot read response but request goes through
+    await fetch(url, {mode: "no-cors", redirect: "follow"});
+    return true;
+  } catch(e) { return false; }
+}
+
+async function syncFromSheets() {
+  showSyncStatus('weightSyncStatus', '☁ Đang tải dữ liệu...', '');
+  const data = await sheetRead('WeightLog');
+  if(!data || data.length < 2) {
+    showSyncStatus('weightSyncStatus', '', '');
+    return;
+  }
+  // rows: [Date, Weight] skip header
+  const newLogs = [];
+  for(let i=1; i<data.length; i++) {
+    const [date, weight] = data[i];
+    if(date && weight) newLogs.push({date: String(date), weight: parseFloat(weight)});
+  }
+  if(newLogs.length > 0) {
+    weightLogs = newLogs;
+    saveLocal();
+    renderAll();
+    showSyncStatus('weightSyncStatus', '✓ Đồng bộ thành công', 'ok');
+    toast('☁ Đã tải ' + newLogs.length + ' bản ghi cân');
+  } else {
+    showSyncStatus('weightSyncStatus', '', '');
+  }
+}
+
+async function syncAll() {
+  toast('☁ Đang đồng bộ...');
+  await syncFromSheets();
+}
+
+function showSyncStatus(id, msg, cls) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.textContent = msg;
+  el.className = 'sync-status' + (cls ? ' '+cls : '');
+}
+
+// ── WEIGHT ─────────────────────────────────────────────
+async function saveWeight() {
+  const inp = document.getElementById('weightInput');
+  const w = parseFloat(inp.value);
+  if(isNaN(w) || w < 30 || w > 200) { toast('⚠ Nhập cân nặng hợp lệ'); return; }
+
+  const today = new Date().toLocaleDateString('vi-VN');
+  // Remove existing entry for today
+  weightLogs = weightLogs.filter(l => l.date !== today);
+  weightLogs.push({date: today, weight: w});
+  weightLogs.sort((a,b) => new Date(a.date.split('/').reverse().join('-')) - new Date(b.date.split('/').reverse().join('-')));
+  saveLocal();
+  renderAll();
+  inp.value = '';
+  toast('✓ Đã lưu ' + w + ' kg');
+
+  showSyncStatus('weightSyncStatus', '☁ Đang lưu lên Google Sheets...', '');
+  const ok = await sheetAppend('WeightLog', [today, w]);
+  showSyncStatus('weightSyncStatus', ok ? '✓ Đã lưu lên Sheets' : '⚠ Lưu Sheets thất bại (đã lưu local)', ok ? 'ok' : 'err');
+}
+
+// ── FASTING ────────────────────────────────────────────
+function toggleFasting() {
+  if(fastingActive) {
+    // Stop
+    const dur = Math.floor((Date.now() - fastingStart) / 3600000 * 10) / 10;
+    const today = new Date().toLocaleDateString('vi-VN');
+    sheetAppend('FastingLog', [today, dur + 'h']);
+    fastingActive = false; fastingStart = null;
+    clearInterval(timerInterval);
+    document.getElementById('fastBtn').className = 'btn btn-green';
+    document.getElementById('fastBtn').textContent = '▶ Bắt đầu nhịn';
+    document.getElementById('fastStatus').textContent = '⚪ Chưa bắt đầu nhịn';
+    document.getElementById('timerDisplay').style.color = '#334155';
+    updateFastingCircle(0);
+    toast('✓ Nhịn ' + dur + ' giờ — ghi lên Sheets!');
+  } else {
+    fastingActive = true; fastingStart = Date.now();
+    document.getElementById('fastBtn').className = 'btn btn-red';
+    document.getElementById('fastBtn').textContent = '⏹ Kết thúc nhịn';
+    document.getElementById('fastStatus').textContent = '🟢 Đang nhịn ăn...';
+    document.getElementById('timerDisplay').style.color = 'var(--green)';
+    toast('▶ Bắt đầu nhịn!');
+    startTimer();
+  }
+  saveLocal();
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if(!fastingActive || !fastingStart) return;
+    const elapsed = Math.floor((Date.now() - fastingStart) / 1000);
+    const h = Math.floor(elapsed/3600), m = Math.floor((elapsed%3600)/60), s = elapsed%60;
+    document.getElementById('timerDisplay').textContent =
+      String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    const goalH = PHASES[currentPhase].goalH;
+    const pct = Math.min(100, elapsed / (goalH * 3600) * 100);
+    updateFastingCircle(pct);
+    document.getElementById('fastGoalLabel').textContent = '/'+goalH+'h';
+    document.getElementById('fastPct').textContent = pct.toFixed(0)+'%';
+  }, 1000);
+}
+
+function updateFastingCircle(pct) {
+  const circ = 2 * Math.PI * 56;
+  const offset = circ * (1 - pct/100);
+  document.getElementById('circleProgress').style.strokeDashoffset = offset;
+}
+
+// ── RENDER ─────────────────────────────────────────────
+function renderAll() {
+  renderStats();
+  renderChart();
+  renderHistory();
+  renderMilestones();
+  renderPhaseCard();
+  renderWorkout();
+  if(fastingActive && fastingStart) startTimer();
+}
+
+function renderStats() {
+  const last = weightLogs.length > 0 ? weightLogs[weightLogs.length-1].weight : START_WEIGHT;
+  const lost = START_WEIGHT - last;
+  const toGo = Math.max(0, last - TARGET_WEIGHT);
+  const pct = Math.min(100, Math.max(0, lost / (START_WEIGHT - TARGET_WEIGHT) * 100));
+  const bmi = (last / (HEIGHT*HEIGHT)).toFixed(1);
+
+  document.getElementById('curWeight').textContent = last.toFixed(1);
+  document.getElementById('toGo').textContent = toGo.toFixed(1);
+  document.getElementById('lostKg').textContent = Math.max(0,lost).toFixed(1);
+  document.getElementById('lostPct').textContent = pct.toFixed(0);
+  document.getElementById('curBMI').textContent = bmi;
+  document.getElementById('mainProgress').style.width = pct+'%';
+}
+
+function renderChart() {
+  const wrap = document.getElementById('chartWrap');
+  if(weightLogs.length < 2) {
+    wrap.innerHTML = '<div style="color:var(--muted);font-size:12px;margin:auto">Chưa có đủ dữ liệu</div>';
+    return;
+  }
+  const logs = weightLogs.slice(-10);
+  const vals = logs.map(l=>l.weight);
+  const mn = Math.min(...vals), mx = Math.max(...vals);
+  const range = mx - mn || 0.5;
+  wrap.innerHTML = logs.map((l,i) => {
+    const hPct = ((l.weight - mn) / range * 60 + 20);
+    const label = l.date.split('/').slice(0,2).join('/');
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div class="chart-bar" style="height:${hPct}px;width:100%">
+        <div class="chart-val">${l.weight}</div>
+      </div>
+      <div class="chart-label">${label}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderHistory() {
+  const el = document.getElementById('weightHistory');
+  if(weightLogs.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Chưa có dữ liệu</div>';
+    return;
+  }
+  const sorted = [...weightLogs].reverse();
+  el.innerHTML = sorted.map((log, i) => {
+    const prev = sorted[i+1];
+    let diffHtml = '';
+    if(prev) {
+      const diff = (log.weight - prev.weight).toFixed(1);
+      const color = parseFloat(diff) < 0 ? 'var(--green)' : 'var(--red)';
+      const arrow = parseFloat(diff) < 0 ? '▼' : '▲';
+      diffHtml = `<div class="log-diff" style="color:${color}">${arrow} ${Math.abs(diff)} kg</div>`;
+    }
+    return `<div class="log-row">
+      <div><div class="log-date">${log.date}</div>${diffHtml}</div>
+      <div class="log-weight">${log.weight} kg</div>
+    </div>`;
+  }).join('');
+}
+
+function renderMilestones() {
+  const last = weightLogs.length > 0 ? weightLogs[weightLogs.length-1].weight : START_WEIGHT;
+  document.getElementById('milestones').innerHTML = MILESTONES.map(m => {
+    const reached = last <= m.w;
+    return `<div class="milestone${reached?' reached':''}">
+      <div class="ms-dot">${reached?'✓':'○'}</div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:${reached?'var(--green)':'var(--muted)'}">${m.label}: ${m.w} kg</div>
+        <div style="font-size:11px;color:var(--muted)">${m.desc}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderPhaseCard() {
+  const p = PHASES[currentPhase];
+  document.getElementById('phaseIcon').textContent = p.icon;
+  document.getElementById('phaseName').textContent = p.name;
+  document.getElementById('phaseName').style.color = p.color;
+  document.getElementById('phaseWeeks').textContent = p.weeks;
+  document.getElementById('phaseIF').textContent = p.if;
+  document.getElementById('phaseIF').style.color = p.color;
+  document.getElementById('phaseCal').textContent = p.cal;
+  document.getElementById('phaseCal').style.color = p.color;
+  document.getElementById('phaseEat').textContent = p.eat;
+  document.getElementById('phaseEat').style.color = p.color;
+  document.getElementById('phaseFast').textContent = p.fast;
+  document.getElementById('phaseFast').style.color = p.color;
+}
+
+function renderWorkout() {
+  const p = PHASES[currentWorkoutPhase];
+  let html = '';
+  p.days.forEach((d, di) => {
+    const total = d.ex.length;
+    const done = d.ex.filter((_,ei) => workoutChecked[`${currentWorkoutPhase}-${di}-${ei}`]).length;
+    html += `<div class="day-card">
+      <div class="day-header" onclick="toggleDay(${di})">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:22px">${d.icon}</span>
+          <div>
+            <div style="font-weight:700;font-size:14px">${d.day}</div>
+            <div style="font-size:12px;color:${p.color}">${d.type}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${done>0?`<span style="font-size:11px;color:var(--green);font-weight:700">${done}/${total} ✓</span>`:''}
+          <span style="color:var(--muted);font-size:16px" id="arrow-${di}">▼</span>
+        </div>
+      </div>
+      <div class="day-body" id="day-body-${di}" style="display:none">
+        ${d.ex.map((ex,ei) => {
+          const key = `${currentWorkoutPhase}-${di}-${ei}`;
+          const checked = !!workoutChecked[key];
+          return `<div class="exercise-item${checked?' done':''}" onclick="toggleExercise('${key}',${di})">
+            <div class="check-circle${checked?' checked':''}">${checked?'✓':''}</div>
+            <span style="font-size:13px;color:${checked?'var(--muted)':'var(--text)'};text-decoration:${checked?'line-through':'none'}">${ex}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+  document.getElementById('workoutList').innerHTML = html;
+}
+
+function toggleDay(di) {
+  const body = document.getElementById(`day-body-${di}`);
+  const arrow = document.getElementById(`arrow-${di}`);
+  const open = body.style.display === 'block';
+  body.style.display = open ? 'none' : 'block';
+  arrow.textContent = open ? '▼' : '▲';
+}
+
+async function toggleExercise(key, di) {
+  workoutChecked[key] = !workoutChecked[key];
+  saveLocal();
+  renderWorkout();
+  // Log to sheets
+  if(workoutChecked[key]) {
+    const today = new Date().toLocaleDateString('vi-VN');
+    sheetAppend('WorkoutLog', [today, key, 'done']);
+  }
+}
+
+// ── PHASE SWITCH ───────────────────────────────────────
+function setPhase(idx, btn) {
+  currentPhase = idx;
+  saveLocal();
+  renderPhaseCard();
+  document.querySelectorAll('.phase-pills .phase-pill').forEach((b,i) => {
+    b.className = 'phase-pill' + (i===idx ? ` active-${['green','orange','purple'][i]}` : '');
+  });
+}
+
+function setWorkoutPhase(idx, btn) {
+  currentWorkoutPhase = idx;
+  saveLocal();
+  document.querySelectorAll('#workoutPhasePills .phase-pill').forEach((b,i) => {
+    b.className = 'phase-pill' + (i===idx ? ` active-${['green','orange','purple'][i]}` : '');
+  });
+  renderWorkout();
+}
+
+// ── TAB ────────────────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── TOAST ──────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── TICKER ─────────────────────────────────────────────
+function startTickerRotation() {
+  setInterval(() => {
+    tickerIdx = (tickerIdx+1) % TIPS.length;
+    document.getElementById('ticker').textContent = TIPS[tickerIdx];
+  }, 6000);
+}
+</script>
+</body>
+</html>
